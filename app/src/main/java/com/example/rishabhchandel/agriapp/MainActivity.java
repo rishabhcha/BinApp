@@ -6,6 +6,7 @@ import android.view.View;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,7 +24,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private boolean isButton1Clicked, isButton2Clicked, isButton3Clicked;
     private WebView webView;
     private LinearLayout ll2;
-    private TextView tv1, tv2, tv3;
+    private RelativeLayout ll1;
+    private TextView tv1, tv2, tv3, valTv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,11 +39,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         webView = findViewById(R.id.webview);
         webView.getSettings().setJavaScriptEnabled(true);
 
+        ll1 = findViewById(R.id.ll1);
         ll2 = findViewById(R.id.ll2);
 
         tv1 = findViewById(R.id.tv1);
         tv2 = findViewById(R.id.tv2);
         tv3 = findViewById(R.id.tv3);
+        valTv = findViewById(R.id.valTv);
 
         showBinIFrame();
 
@@ -69,35 +73,97 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void showBinIFrame() {
         if (!isButton1Clicked) {
 
-            webView.setVisibility(View.VISIBLE);
+            ll1.setVisibility(View.VISIBLE);
             ll2.setVisibility(View.GONE);
 
             String html = "<iframe width=\"450\" height=\"260\" style=\"border: 1px solid #cccccc;\" src=\"https://thingspeak.com/channels/750300/charts/2?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15\"></iframe>";
             webView.loadData(html, "text/html", null);
+
+            fetchBinValue();
+
             isButton1Clicked = true;
             isButton2Clicked = false;
             isButton3Clicked = false;
         }
     }
 
+    private void fetchBinValue() {
+
+        String url = "https://api.thingspeak.com/channels/750300/fields/2.json?results=1";
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            valTv.setText(response.getJSONArray("feeds").getJSONObject(0).getString("field2"));
+                        } catch (JSONException e) {
+                            Toast.makeText(MainActivity.this, "Something went wrong!!", Toast.LENGTH_SHORT).show();
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(MainActivity.this, "Something went wrong!! Try Again", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+        MySingleton.getInstance(MainActivity.this).addToRequestQueue(jsonObjectRequest);
+
+    }
+
     private void showAirQualityIFrame() {
         if (!isButton2Clicked) {
 
-            webView.setVisibility(View.VISIBLE);
+            ll1.setVisibility(View.VISIBLE);
             ll2.setVisibility(View.GONE);
 
             String html = "<iframe width=\"450\" height=\"260\" style=\"border: 1px solid #cccccc;\" src=\"https://thingspeak.com/channels/750300/charts/1?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15\"></iframe>";
             webView.loadData(html, "text/html", null);
+
+            fetchAirQualityValue();
+
             isButton2Clicked = true;
             isButton1Clicked = false;
             isButton3Clicked = false;
         }
     }
 
+    private void fetchAirQualityValue() {
+
+        String url = "https://api.thingspeak.com/channels/750300/fields/1.json?results=1";
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            valTv.setText(response.getJSONArray("feeds").getJSONObject(0).getString("field1"));
+                        } catch (JSONException e) {
+                            Toast.makeText(MainActivity.this, "Something went wrong!!", Toast.LENGTH_SHORT).show();
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(MainActivity.this, "Something went wrong!! Try Again", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+        MySingleton.getInstance(MainActivity.this).addToRequestQueue(jsonObjectRequest);
+
+    }
+
     private void showWasteStatus() {
         if (!isButton3Clicked) {
 
-            webView.setVisibility(View.GONE);
+            ll1.setVisibility(View.GONE);
             ll2.setVisibility(View.VISIBLE);
 
             fetchValuesFromAPI();
